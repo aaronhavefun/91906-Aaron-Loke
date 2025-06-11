@@ -159,7 +159,7 @@ class GameView(arcade.Window):
             self.player.change_x = -MOVEMENT_SPEED
         elif key in (arcade.key.RIGHT, arcade.key.D):
             self.player.change_x = MOVEMENT_SPEED
-        elif key in (arcade.key.ESCAPE, arcade.key.Q):
+        elif key in (arcade.key.ESCAPE, arcade.key.Q):  
             arcade.close_window()
 
     def on_key_release(self, key, modifiers):
