@@ -1,5 +1,6 @@
 import arcade
 import os
+import random
 
 # Constants
 WINDOW_WIDTH = 1280
@@ -7,7 +8,7 @@ WINDOW_HEIGHT = 720
 WINDOW_TITLE = "Platformer"
 
 TILE_SCALING = 0.5
-PLAYER_JUMP_SPEED = 20
+PLAYER_JUMP_SPEED = 15
 GRAVITY = 1
 
 MOVEMENT_SPEED = 3
@@ -17,6 +18,7 @@ RIGHT_FACING = 0
 LEFT_FACING = 1
 
 CHARACTER_SCALING = 0.75
+
 
 
 class PlayerCharacter(arcade.Sprite):
@@ -126,6 +128,7 @@ class GameView(arcade.Window):
         self.player.center_y = WINDOW_HEIGHT / 2
         self.player_sprite_list.append(self.player)
         self.scene.add_sprite("Player", self.player)
+        self.scene.add_sprite_list_before("Foreground", "Player")
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             self.player, walls=self.scene["Platform"], gravity_constant=GRAVITY
