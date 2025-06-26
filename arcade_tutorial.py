@@ -125,7 +125,7 @@ class GameView(arcade.Window):
             self.fall_texture_pair
         )
         self.player.center_x = WINDOW_WIDTH / 2
-        self.player.center_y = WINDOW_HEIGHT / 2
+        self.player.center_y = (WINDOW_HEIGHT / 2) + 1000
         self.player_sprite_list.append(self.player)
         self.scene.add_sprite("Player", self.player)
         self.scene.add_sprite_list_before("Foreground", "Player")
