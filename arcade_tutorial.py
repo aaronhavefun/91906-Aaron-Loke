@@ -17,7 +17,7 @@ UPDATES_PER_FRAME = 5
 RIGHT_FACING = 0
 LEFT_FACING = 1
 
-CHARACTER_SCALING = 0.75
+CHARACTER_SCALING = 0.3
 
 
 
@@ -124,7 +124,7 @@ class GameView(arcade.Window):
             self.jump_texture_pair,
             self.fall_texture_pair
         )
-        self.player.center_x = WINDOW_WIDTH / 2
+        self.player.center_x = (WINDOW_WIDTH / 2) -570
         self.player.center_y = (WINDOW_HEIGHT / 2) + 1000
         self.player_sprite_list.append(self.player)
         self.scene.add_sprite("Player", self.player)
