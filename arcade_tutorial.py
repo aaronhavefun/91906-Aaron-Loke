@@ -101,6 +101,9 @@ class GameView(arcade.Window):
             },
             "Coins": {
                 "use_spatial_hash": True
+            },
+            "Danger": {
+                "use_spatial_hash": True
             }
         }
 
@@ -111,6 +114,8 @@ class GameView(arcade.Window):
             scaling=TILE_SCALING,
             layer_options=layer_options,
         )
+        
+        
 
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
@@ -125,7 +130,9 @@ class GameView(arcade.Window):
             self.fall_texture_pair
         )
         self.player.center_x = (WINDOW_WIDTH / 2) -575
-        self.player.center_y = (WINDOW_HEIGHT / 2) + 100
+        self.player.center_y = (WINDOW_HEIGHT / 2) -100
+        self.spawn_x = self.player.center_x
+        self.spawn_y = self.player.center_y
         self.player_sprite_list.append(self.player)
         self.scene.add_sprite("Player", self.player)
         self.scene.add_sprite_list_before("Foreground", "Player")
@@ -152,6 +159,16 @@ class GameView(arcade.Window):
         self.player.update_animation(delta_time)
 
         self.camera.position = self.player.position
+        
+        if "Danger" in self.scene:
+            danger_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Danger"])
+            if danger_hit_list:
+                self.player.center_x = self.spawn_x
+                self.player.center_y = self.spawn_x
+                self.player.change_x = 0
+                self.player.change_y = 0
+                
+            
 
     def on_key_press(self, key, modifiers):
         if key in (arcade.key.UP, arcade.key.W):
@@ -168,6 +185,8 @@ class GameView(arcade.Window):
     def on_key_release(self, key, modifiers):
         if key in (arcade.key.LEFT, arcade.key.RIGHT, arcade.key.A, arcade.key.D):
             self.player.change_x = 0
+    
+
 
 
 def main():
