@@ -18,21 +18,8 @@ RIGHT_FACING = 0
 LEFT_FACING = 1
 
 CHARACTER_SCALING = 0.5
-SPRITE_SPEED = 0.5
+LIVES = 3
 
-class Bird(arcade.sprite):
-    
-    def follow_sprite(self, player_sprite):
-        
-        if self.center_y < player_sprite.center_y:
-            self.center_y += min(SPRITE_SPEED, player_sprite.center_y - self.center_y)
-        elif self.center_y > player_sprite.center_y:
-            self.center_y -= min(SPRITE_SPEED, self.center_y - player_sprite.center_y)
-
-        if self.center_x < player_sprite.center_x:
-            self.center_x += min(SPRITE_SPEED, player_sprite.center_x - self.center_x)
-        elif self.center_x > player_sprite.center_x:
-            self.center_x -= min(SPRITE_SPEED, self.center_x - player_sprite.center_x)
 
 
 
@@ -161,6 +148,7 @@ class GameView(arcade.Window):
 
         self.background_color = arcade.csscolor.CORNFLOWER_BLUE
 
+
     def on_draw(self):
         self.clear()
         self.camera.use()
@@ -182,7 +170,11 @@ class GameView(arcade.Window):
                 self.player.center_y = self.spawn_x
                 self.player.change_x = 0
                 self.player.change_y = 0
+                LIVES -= 1
+                print(LIVES)
                 
+          
+        
             
 
     def on_key_press(self, key, modifiers):
