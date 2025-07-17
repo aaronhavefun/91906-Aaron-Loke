@@ -5,7 +5,7 @@ import random
 # Constants
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
-WINDOW_TITLE = "Platformer"
+WINDOW_TITLE = "Game"
 
 TILE_SCALING = 1
 PLAYER_JUMP_SPEED = 12
@@ -79,12 +79,12 @@ class GameView(arcade.Window):
 
         self.player = None
         
-        livesRemaining = 3
+        
 
 
 
         character = ":resources:images/animated_characters/female_adventurer/femaleAdventurer"
-
+    
         idle = arcade.load_texture(f"{character}_idle.png")
         self.idle_texture_pair = idle, idle.flip_left_right()
 
