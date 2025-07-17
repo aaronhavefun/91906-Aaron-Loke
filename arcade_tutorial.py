@@ -18,7 +18,7 @@ RIGHT_FACING = 0
 LEFT_FACING = 1
 
 CHARACTER_SCALING = 0.5
-LIVES = 3
+
 
 
 
@@ -78,6 +78,9 @@ class GameView(arcade.Window):
         self.physics_engine = None
 
         self.player = None
+        
+        livesRemaining = 3
+
 
 
         character = ":resources:images/animated_characters/female_adventurer/femaleAdventurer"
@@ -116,6 +119,7 @@ class GameView(arcade.Window):
             scaling=TILE_SCALING,
             layer_options=layer_options,
         )
+
         
         
 
@@ -170,11 +174,9 @@ class GameView(arcade.Window):
                 self.player.center_y = self.spawn_x
                 self.player.change_x = 0
                 self.player.change_y = 0
-                LIVES -= 1
-                print(LIVES)
+
                 
           
-        
             
 
     def on_key_press(self, key, modifiers):
@@ -193,6 +195,7 @@ class GameView(arcade.Window):
         if key in (arcade.key.LEFT, arcade.key.RIGHT, arcade.key.A, arcade.key.D):
             self.player.change_x = 0
     
+
 
 
 
