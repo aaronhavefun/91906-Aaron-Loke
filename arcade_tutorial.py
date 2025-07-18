@@ -8,7 +8,7 @@ WINDOW_HEIGHT = 720
 WINDOW_TITLE = "Game"
 
 TILE_SCALING = 1
-PLAYER_JUMP_SPEED = 12
+PLAYER_JUMP_SPEED = 5
 GRAVITY = 1
 
 MOVEMENT_SPEED = 3
@@ -147,7 +147,7 @@ class GameView(arcade.Window):
             self.player, walls=self.scene["Platform"], gravity_constant=GRAVITY
         )
 
-        self.camera = arcade.Camera2D()
+        self.camera = arcade.Camera2D(zoom=4)
         self.gui_camera = arcade.Camera2D()
 
         self.background_color = arcade.csscolor.CORNFLOWER_BLUE
