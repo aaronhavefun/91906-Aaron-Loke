@@ -3,15 +3,15 @@ import os
 import random
 
 # Constants
-WINDOW_WIDTH = 1280
-WINDOW_HEIGHT = 720
+WINDOW_WIDTH = 1600
+WINDOW_HEIGHT = 900
 WINDOW_TITLE = "Game"
 
 TILE_SCALING = 1
-PLAYER_JUMP_SPEED = 5
+PLAYER_JUMP_SPEED = 8
 GRAVITY = 1
 
-MOVEMENT_SPEED = 3
+MOVEMENT_SPEED = 1
 UPDATES_PER_FRAME = 5
 
 RIGHT_FACING = 0
@@ -34,6 +34,10 @@ class PlayerCharacter(arcade.Sprite):
         self.fall_texture_pair = fall_texture_pair
 
         super().__init__(self.idle_texture_pair[0], scale=CHARACTER_SCALING)
+        
+        self.jump_count = 0
+        self.max_jumps = 2
+        
 
     def update_animation(self, delta_time: float = 1 / 60):
 
@@ -79,10 +83,15 @@ class GameView(arcade.Window):
 
         self.player = None
         
+        self.lives = 4
+        self.font_size = 20
+        self.font_color = arcade.color.WHITE
         
-        character = ":resources:images/animated_characters/female_adventurer/femaleAdventurer"
+        self.score = 0
+        
+        character = "C:/Users/aaron/OneDrive/Documents/13DTP/python/arcade/frog_man/frog_man"
     
-        idle = arcade.load_texture(f"{character}_idle.png")
+        idle = arcade.load_texture(f"{character}_idle0.png")
         self.idle_texture_pair = idle, idle.flip_left_right()
 
         self.walk_texture_pairs = []
@@ -105,6 +114,9 @@ class GameView(arcade.Window):
                 "use_spatial_hash": True
             },
             "Danger": {
+                "use_spatial_hash": True
+            },
+            "Diamond": {
                 "use_spatial_hash": True
             }
         }
@@ -132,8 +144,8 @@ class GameView(arcade.Window):
             self.jump_texture_pair,
             self.fall_texture_pair
         )
-        self.player.center_x = (WINDOW_WIDTH / 2) -575
-        self.player.center_y = (WINDOW_HEIGHT / 2) -100
+        self.player.center_x = (WINDOW_WIDTH / 2) -760
+        self.player.center_y = (WINDOW_HEIGHT / 2) -150
         self.spawn_x = self.player.center_x
         self.spawn_y = self.player.center_y
         self.player_sprite_list.append(self.player)
@@ -155,6 +167,20 @@ class GameView(arcade.Window):
         self.camera.use()
         self.scene.draw()
         self.gui_camera.use()
+        
+        arcade.draw_text(
+            f"Lives Remaining: {self.lives}",
+            10, WINDOW_HEIGHT - 30,
+            font_size = self.font_size,
+            color=self.font_color
+        )
+        
+        arcade.draw_text(
+            f"Score: {self.score}",
+            10, WINDOW_HEIGHT - 60,
+            font_size = self.font_size,
+            color=self.font_color
+        )
 
 
     def on_update(self, delta_time):
@@ -167,17 +193,43 @@ class GameView(arcade.Window):
         if "Danger" in self.scene:
             danger_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Danger"])
             if danger_hit_list:
-                self.player.center_x = self.spawn_x
-                self.player.center_y = self.spawn_x
-                self.player.change_x = 0
-                self.player.change_y = 0
-
+                self.lives -= 1
+                if self.lives > 0:
+                    self.player.center_x = self.spawn_x
+                    self.player.center_y = self.spawn_x
+                    self.player.change_x = 0
+                    self.player.change_y = 0
+                else:
+                    print("Game over")
+                    arcade.close_window()
+                
+        if self.physics_engine.can_jump():
+            self.player.jump_count = 0
+            
+        coin_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Coins"])
+        
+        for coin in coin_hit_list:
+            coin.remove_from_sprite_lists()
+            self.score += 1
+            
+        diamond_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Diamond"])
+        
+        for diamond in diamond_hit_list:
+            diamond.remove_from_sprite_lists()
+            self.score += 5
+            
+        if  "Chest" in self.scene:
+            chest_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Chest"])
+            if chest_hit_list:
+                print(self.score)
+                arcade.exit()
             
 
     def on_key_press(self, key, modifiers):
         if key in (arcade.key.UP, arcade.key.W):
             if self.physics_engine.can_jump():
                 self.player.change_y = PLAYER_JUMP_SPEED
+                
 
         elif key in (arcade.key.LEFT, arcade.key.A):
             self.player.change_x = -MOVEMENT_SPEED
@@ -185,6 +237,11 @@ class GameView(arcade.Window):
             self.player.change_x = MOVEMENT_SPEED
         elif key in (arcade.key.ESCAPE, arcade.key.Q):  
             arcade.close_window()
+        
+        if key in (arcade.key.UP, arcade.key.W):
+            if self.player.jump_count < self.player.max_jumps:
+                self.player.change_y = PLAYER_JUMP_SPEED
+                self.player.jump_count +=1
 
     def on_key_release(self, key, modifiers):
         if key in (arcade.key.LEFT, arcade.key.RIGHT, arcade.key.A, arcade.key.D):
