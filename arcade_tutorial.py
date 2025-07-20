@@ -80,9 +80,6 @@ class GameView(arcade.Window):
         self.player = None
         
         
-
-
-
         character = ":resources:images/animated_characters/female_adventurer/femaleAdventurer"
     
         idle = arcade.load_texture(f"{character}_idle.png")
@@ -175,8 +172,6 @@ class GameView(arcade.Window):
                 self.player.change_x = 0
                 self.player.change_y = 0
 
-                
-          
             
 
     def on_key_press(self, key, modifiers):
