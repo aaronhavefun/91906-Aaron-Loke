@@ -9,8 +9,8 @@ WINDOW_HEIGHT = 900
 WINDOW_TITLE = "Game"
 
 TILE_SCALING = 1
-PLAYER_JUMP_SPEED = 7
-GRAVITY = 1
+PLAYER_JUMP_SPEED = 5
+GRAVITY = .5
 
 MOVEMENT_SPEED = 1
 UPDATES_PER_FRAME = 5
@@ -20,7 +20,34 @@ LEFT_FACING = 1
 
 CHARACTER_SCALING = 0.5
 
+class MenuView(arcade.View):
+    def on_show_view(self):
+        self.window.background_color =  arcade.color.COSMIC_LATTE
+    
+    def on_draw(self):
+        self.clear()
+        arcade.draw_text("Welcome to Frog Adventures", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, arcade.color.BLACK, font_size = 50, anchor_x="center")
+        arcade.draw_text("Click to advance", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 75, arcade.color.GRAY, font_size=25, anchor_x="center")
+    
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        instruction_view = InstructionView()
+        self.window.show_view(instruction_view)
 
+class InstructionView(arcade.View):
+    def on_show_view(self):
+        self.window.background_color = arcade.color.GO_GREEN
+    
+    def on_draw(self):
+        self.clear()
+        arcade.draw_text("You are a Frog, and must collect all the coins and diamonds, securing them in your chest.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2,
+                         arcade.color.BLACK, font_size=50, anchor_x="center")
+        arcade.draw_text("WASD / ARROW KEYS to move, Double tap jump to double jump.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 75,
+                         arcade.color.GRAY, font_size=20, anchor_x="center")
+        arcade.draw_text("Click to advance", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 85, arcade.color.GRAY, font_size=20, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        game_view = GameView()
+        self.window.show_view(game_view)
 
 
 
@@ -37,7 +64,7 @@ class PlayerCharacter(arcade.Sprite):
         super().__init__(self.idle_texture_pair[0], scale=CHARACTER_SCALING)
         
         self.jump_count = 0
-        self.max_jumps = 1.5
+        self.max_jumps = 1
         
 
     def update_animation(self, delta_time: float = 1 / 60):
