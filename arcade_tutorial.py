@@ -1,6 +1,7 @@
 import arcade
 import os
 import random
+import time
 
 # Constants
 WINDOW_WIDTH = 1600
@@ -36,7 +37,7 @@ class PlayerCharacter(arcade.Sprite):
         super().__init__(self.idle_texture_pair[0], scale=CHARACTER_SCALING)
         
         self.jump_count = 0
-        self.max_jumps = 2
+        self.max_jumps = 1.5
         
 
     def update_animation(self, delta_time: float = 1 / 60):
@@ -151,7 +152,7 @@ class GameView(arcade.Window):
             self.fall_texture_pair
         )
         self.player.center_x = 50
-        self.player.center_y = 50
+        self.player.center_y = 100
         self.spawn_x = self.player.center_x
         self.spawn_y = self.player.center_y
         self.player_sprite_list.append(self.player)
@@ -271,6 +272,8 @@ class GameView(arcade.Window):
             if chest_hit_list:
                 print(self.score)
                 arcade.exit()
+
+        
                 
         
             
