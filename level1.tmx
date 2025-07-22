@@ -936,7 +936,7 @@
     <property name="change_x" type="int" value="1"/>
    </properties>
   </object>
-  <object id="16" gid="124" x="394.375" y="509.5" width="16" height="10">
+  <object id="16" gid="124" x="394.25" y="509.5" width="16" height="10">
    <properties>
     <property name="change_x" type="int" value="1"/>
    </properties>

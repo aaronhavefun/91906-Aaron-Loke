@@ -268,8 +268,9 @@ class GameView(arcade.Window):
         if "moving_danger" in self.scene:
             moving_danger_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["moving_danger"])
             if moving_danger_hit_list: 
-                if danger_hit_list:
+                if moving_danger_hit_list:
                     self.lives -= 1
+                    print(self.lives)
                 if self.lives > 0:
                     self.player.center_x = self.spawn_x
                     self.player.center_y = self.spawn_x
