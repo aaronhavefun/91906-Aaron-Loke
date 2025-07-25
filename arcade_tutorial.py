@@ -10,7 +10,7 @@ WINDOW_TITLE = "Game"
 
 TILE_SCALING = 1
 PLAYER_JUMP_SPEED = 5
-GRAVITY = .5
+GRAVITY = 0.5
 
 MOVEMENT_SPEED = 1
 UPDATES_PER_FRAME = 5
@@ -150,7 +150,7 @@ class GameView(arcade.Window):
             "x_moving_platform": {
                 "use_spatial_hash": True
             },
-            "y_moving_platform": {
+            "y_moving_pla   tform": {
                 "use_spatial_hash": True
             },
             "moving_danger": {
