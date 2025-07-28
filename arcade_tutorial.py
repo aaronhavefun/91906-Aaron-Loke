@@ -5,14 +5,14 @@ import random
 # Constants
 WINDOW_WIDTH = 1600
 WINDOW_HEIGHT = 900
-WINDOW_TITLE = "Game"
+WINDOW_TITLE = "Frog Adventures"
 
 TILE_SCALING = 1
 PLAYER_JUMP_SPEED = 3
-PLAYER_DOUBLE_JUMP_SPEED = 1.5
-GRAVITY = 0.25
+PLAYER_DOUBLE_JUMP_SPEED = 2
+GRAVITY = .25
 
-MOVEMENT_SPEED = .75
+MOVEMENT_SPEED = .6
 UPDATES_PER_FRAME = 5
 
 RIGHT_FACING = 0
@@ -44,9 +44,9 @@ class InstructionView(arcade.View):
         self.clear()
         arcade.draw_text("You are a Frog, and must collect all the coins and diamonds, securing them in your chest.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2,
                          arcade.color.BLACK, font_size=25, anchor_x="center")
-        arcade.draw_text("WASD / ARROW KEYS to move, Double tap jump to double jump.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 75,
+        arcade.draw_text("A/D to move left and right, Space to jump, and double tap jump to double jump.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 75,
                          arcade.color.GRAY, font_size=20, anchor_x="center")
-        arcade.draw_text("Click to advance", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 200, arcade.color.GRAY, font_size=20, anchor_x="center")
+        arcade.draw_text("Click to advance", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 175, arcade.color.GRAY, font_size=20, anchor_x="center")
 
     def on_mouse_press(self, _x, _y, _button, _modifiers):
         game_view = GameView()
@@ -94,6 +94,8 @@ class PlayerCharacter(arcade.Sprite):
         #self.fall_texture_pair = fall_texture_pair
 
         super().__init__(self.idle_texture_pairs[0], scale=CHARACTER_SCALING)
+        
+        
         
         self.jump_count = 0
         self.max_jumps = 2
@@ -352,6 +354,7 @@ class GameView(arcade.View):
         self.time_taken += delta_time
         
         self.center_camera_to_player()
+        
    
         if "Danger" in self.scene:
             danger_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Danger"])
@@ -399,13 +402,11 @@ class GameView(arcade.View):
             chest_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Chest"])
             if chest_hit_list:
                 self.level += 1
-                self.setup()
-
-            
+                self.setup()    
 
 
     def on_key_press(self, key, modifiers):
-        if key in (arcade.key.UP, arcade.key.W):
+        if key in (arcade.key.UP, arcade.key.SPACE):
             if self.physics_engine.can_jump():
                 self.player.change_y = PLAYER_JUMP_SPEED
                 self.player.jump_count = 1

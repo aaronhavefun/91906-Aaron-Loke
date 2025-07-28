@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.11.2" name="background" tilewidth="1280" tileheight="1280" tilecount="11" columns="0">
+<tileset version="1.10" tiledversion="1.11.2" name="background" tilewidth="640" tileheight="384" tilecount="12" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <image source="Background_Hills_v1.0/_PNG/background1.png" width="640" height="384"/>
@@ -31,7 +31,10 @@
  <tile id="9">
   <image source="rocky_roads/Backgrounds/trees.png" width="256" height="128"/>
  </tile>
- <tile id="10">
-  <image source="HR_Snow_Landscapes.png" width="1280" height="1280"/>
+ <tile id="13">
+  <image source="void.png" width="16" height="16"/>
+ </tile>
+ <tile id="14">
+  <image source="background 1.png" width="576" height="324"/>
  </tile>
 </tileset>
