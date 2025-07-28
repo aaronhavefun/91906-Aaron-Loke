@@ -159,6 +159,7 @@ class GameView(arcade.View):
         self.score = 0
         
         self.level = 1
+
         
         self.time_taken = 0
         
@@ -212,7 +213,7 @@ class GameView(arcade.View):
 
         
         
-        map_path = os.path.join(os.path.dirname(__file__), f"level2.tmx")
+        map_path = os.path.join(os.path.dirname(__file__), f"level{self.level}.tmx")
 
         self.tile_map = arcade.load_tilemap(
             map_path,
@@ -251,7 +252,7 @@ class GameView(arcade.View):
             self.jump_texture_pairs,
             #self.fall_texture_pair
         )
-        self.player.center_x = 30
+        self.player.center_x = 50
         self.player.center_y = 150
         self.spawn_x = self.player.center_x
         self.spawn_y = self.player.center_y
@@ -398,10 +399,9 @@ class GameView(arcade.View):
             chest_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Chest"])
             if chest_hit_list:
                 self.level += 1
-                print(self.level)
                 self.setup()
 
-        
+            
 
 
     def on_key_press(self, key, modifiers):
