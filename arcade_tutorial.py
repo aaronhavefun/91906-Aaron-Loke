@@ -254,7 +254,7 @@ class GameView(arcade.View):
             self.jump_texture_pairs,
             #self.fall_texture_pair
         )
-        self.player.center_x = 50
+        self.player.center_x = 30
         self.player.center_y = 150
         self.spawn_x = self.player.center_x
         self.spawn_y = self.player.center_y
