@@ -157,7 +157,7 @@ class GameView(arcade.View):
 
         self.player = None
 
-        self.lives = 3
+        self.lives = 5
         self.font_size = 20
         self.font_color = arcade.color.WHITE
 
@@ -256,6 +256,11 @@ class GameView(arcade.View):
         self.scene.add_sprite_list_before("Foreground", "Player")
 
         self.moving_danger_list = arcade.SpriteList()
+        self.cannon_list = arcade.SpriteList()
+
+        if "Cannon" in self.scene:
+            self.cannon_list = self.scene["Cannon"]
+
         if "moving_danger" in self.scene:
             self.moving_danger_list = self.scene["moving_danger"]
 
@@ -315,7 +320,7 @@ class GameView(arcade.View):
         
         if "Cannon" in self.scene:
             for cannon in self.scene["Cannon"]:
-                self.cannon_fire_timers[cannon] = random.uniform(1, 3)
+                self.cannon_fire_timers[cannon] = random.uniform(1, 75)
 
     def on_draw(self):
         self.clear()
@@ -368,7 +373,7 @@ class GameView(arcade.View):
         self.scene["Coins"].update_animation(delta_time)
         self.scene["Diamond"].update_animation(delta_time)
         self.moving_danger_list.update_animation(delta_time)
-        self.scene["Cannon"].update_animation(delta_time)
+        self.cannon_list.update_animation(delta_time)
         self.scene.update(delta_time)
 
         self.time_taken += delta_time
@@ -416,7 +421,7 @@ class GameView(arcade.View):
             bullet.remove_from_sprite_lists()
             self.player_dies()
 
-        # Cannon firing logic
+        
         if "Cannon" in self.scene:
             for cannon in self.scene["Cannon"]:
                 self.cannon_fire_timers[cannon] -= delta_time
@@ -465,7 +470,7 @@ class GameView(arcade.View):
 
 
     def on_key_press(self, key, modifiers):
-        if key in (arcade.key.UP, arcade.key.SPACE):
+        if key in (arcade.key.W, arcade.key.SPACE):
             if self.physics_engine.can_jump():
                 self.player.change_y = PLAYER_JUMP_SPEED
                 self.player.jump_count = 1
@@ -480,14 +485,14 @@ class GameView(arcade.View):
         elif key in (arcade.key.ESCAPE, arcade.key.Q):
             arcade.close_window()
 
-        if key == arcade.key.UP or key == arcade.key.SPACE:
+        if key == arcade.key.W or key == arcade.key.SPACE:
             self.jump_key_pressed = True
 
     def on_key_release(self, key, modifiers):
         if key in (arcade.key.LEFT, arcade.key.RIGHT, arcade.key.A, arcade.key.D):
             self.player.change_x = 0
 
-        if key == arcade.key.UP or key == arcade.key.SPACE:
+        if key == arcade.key.W or key == arcade.key.SPACE:
             self.jump_key_pressed = False
 
 
