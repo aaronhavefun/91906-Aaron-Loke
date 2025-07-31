@@ -62,15 +62,18 @@ class GameEnd(arcade.View):
         Drwas the game end screen relevant text.
         """
         self.clear()
-        arcade.draw_text("You beat the game! \nCongratulations, "
-                         "you are now more financially stable.",
+        arcade.draw_text("You beat the game! \nCongratulations, ",
                          WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2,
                          arcade.color.BLACK,
                          font_size=40, anchor_x="center")
         
+        arcade.draw_text("you are now more financially stable.",
+                         WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 45,
+                         arcade.color.BLACK,
+                         font_size=40, anchor_x="center")
+        
         arcade.draw_text(f"You beat the game in {self.final_time},"
-                         f"with a score of {self.final_score}!"
-                         "Compare with your friends.",
+                         f"with a score of {self.final_score}!",
                          WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 75,
                          arcade.color.BLACK, font_size = 25,
                          anchor_x="center")
@@ -138,9 +141,15 @@ class InstructionView(arcade.View):
     def on_draw(self):
         """Renders the view, placing the text."""
         self.clear()
-        arcade.draw_text("You are a Frog, collect as many diamonds"
-        " and coins in the shortest time\n to be most succesful in the future.",
-                         WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2,
+        arcade.draw_text("You are a Frog, collect as" 
+                         " many diamonds and coins in the",
+                         WINDOW_WIDTH / 2, 
+                         WINDOW_HEIGHT / 2,
+                         arcade.color.BLACK, font_size=25, anchor_x="center")
+        
+        arcade.draw_text("shortest amount time\n" 
+                         " to be most succesful in the future.",
+                         WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2-45,
                          arcade.color.BLACK, font_size=25, anchor_x="center")
                          
         arcade.draw_text("A/D to move left and right,"
@@ -380,7 +389,7 @@ class GameView(arcade.View):
         }
 
         map_path = os.path.join(os.path.dirname(__file__),
-                                f"level2.tmx")
+                                f"level3.tmx")
         
         if not os.path.exists(map_path):
             raise FileNotFoundError(f"Level{self.level} map file missing.")
@@ -710,7 +719,7 @@ class GameView(arcade.View):
                 
         is_on_ladder = arcade.check_for_collision_with_list(self.player,
                                                             self.ladder_list)
-        # Redifing movement to accustom for ladedr mechanics
+        # Redifing movement to accustom for ladder mechanics
         # Allowing user to climb upwards.
         if is_on_ladder:
             self.player.change_y = 0
@@ -789,17 +798,26 @@ class GameView(arcade.View):
     def on_key_press(self, key, modifiers):
         """Handles player mvovement keys, applying speed to
         jumps and horizontal motion. """
+        is_on_ladder  = arcade.check_for_collision_with_list(self.player,
+                                                             self.ladder_list)
+        
         if key in (arcade.key.W, arcade.key.SPACE):
-            if self.physics_engine.can_jump():
-                """ Identifying player ability to double jump
-                ensuring cooldown is off."""
-                self.player.change_y = PLAYER_JUMP_SPEED
-                self.player.jump_count = 1
+            if is_on_ladder:
+                self.jump_key_pressed = True
+                self.player.change_y = PLAYER_CLIMB_SPEED
+            else:
+                if self.physics_engine.can_jump():
+                    """ Identifying player ability to double jump
+                    ensuring cooldown is off."""
+                    self.player.change_y = PLAYER_JUMP_SPEED
+                    self.player.jump_count = 1
             # Applying additional jump
-            elif self.player.jump_count < self.player.max_jumps:
-                self.player.change_y = PLAYER_DOUBLE_JUMP_SPEED
-                self.player.jump_count += 1
-
+                elif self.player.jump_count < self.player.max_jumps:
+                    self.player.change_y = PLAYER_DOUBLE_JUMP_SPEED
+                    self.player.jump_count += 1
+            
+                
+                
         elif key in (arcade.key.LEFT, arcade.key.A):
             self.player.change_x = -self.current_movement_speed
         elif key in (arcade.key.RIGHT, arcade.key.D):
@@ -818,6 +836,10 @@ class GameView(arcade.View):
         # User stops climbing on ladder.
         if key == arcade.key.W or key == arcade.key.SPACE:
             self.jump_key_pressed = False
+        is_on_ladder = arcade.check_for_collision_with_list(self.player,
+                                                            self.ladder_list)
+        if is_on_ladder:
+            self.player.change_y = 0
 
 
 def main():
