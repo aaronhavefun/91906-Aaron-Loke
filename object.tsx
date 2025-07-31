@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.11.2" name="objects" tilewidth="32" tileheight="64" tilecount="21" columns="0">
+<tileset version="1.10" tiledversion="1.11.2" name="objects" tilewidth="32" tileheight="64" tilecount="25" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <image source="rocky_roads/Deco/log_wall.png" width="32" height="48"/>
@@ -80,5 +80,17 @@
  </tile>
  <tile id="22">
   <image source="rocky_roads/Objects/ladder.png" width="16" height="64"/>
+ </tile>
+ <tile id="23">
+  <image source="rocky_roads/Objects/animated_bounce_pad0.png" width="16" height="32"/>
+ </tile>
+ <tile id="24">
+  <image source="rocky_roads/Objects/animated_bounce_pad1.png" width="16" height="32"/>
+ </tile>
+ <tile id="25">
+  <image source="rocky_roads/Objects/animated_bounce_pad2.png" width="16" height="32"/>
+ </tile>
+ <tile id="26">
+  <image source="rocky_roads/Objects/animated_bounce_pad3.png" width="16" height="32"/>
  </tile>
 </tileset>

@@ -213,7 +213,7 @@ class GameView(arcade.View):
             }
         }
 
-        map_path = os.path.join(os.path.dirname(__file__), f"level2.tmx")
+        map_path = os.path.join(os.path.dirname(__file__), f"level3.tmx")
 
         self.tile_map = arcade.load_tilemap(
             map_path,
@@ -299,6 +299,7 @@ class GameView(arcade.View):
             all_platforms.extend(self.scene["UpMovingPlatforms"])
         if "DownMovingPlatforms" in self.scene:
             all_platforms.extend(self.scene["DownMovingPlatforms"])
+        
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             self.player, walls=self.scene["Platform"],
@@ -416,7 +417,7 @@ class GameView(arcade.View):
             bullet.remove_from_sprite_lists()
             self.player_dies()
 
-        # Cannon firing logic
+        
         if "Cannon" in self.scene:
             for cannon in self.scene["Cannon"]:
                 self.cannon_fire_timers[cannon] -= delta_time

@@ -23,10 +23,13 @@ FOLLOW_DECAY_CONST = 0.3
 
 PLAYER_CLIMB_SPEED = .5
 
-# Bullet Constants
+
 BULLET_SPEED = -1
 BULLET_TEXTURE = "rocky_roads/Enemies/bullet.png" 
-BULLET_SCALING = 0.5
+BULLET_SCALING = 1
+
+QUICKSAND_SPEED_DEBUFF = 0.3
+
 
 
 class MenuView(arcade.View):
@@ -73,7 +76,7 @@ class GameOverView(arcade.View):
     def on_draw(self):
         self.clear()
         arcade.draw_text("Game Over", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 100, arcade.color.RED, 60, anchor_x="center")
-        arcade.draw_text(f"Final Score and Time: {self.final_score} and {self.final_time}.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 25, arcade.color.RED, 60, anchor_x="center")
+        arcade.draw_text(f"Final Score and Time: {self.final_score}pts and {self.final_time}.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 25, arcade.color.RED, 60, anchor_x="center")
         arcade.draw_text(f"Click to restart, or ENTER to quit.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 150, arcade.color.RED, 60, anchor_x="center")
 
     def on_key_press(self, key, modifiers):
@@ -187,6 +190,10 @@ class GameView(arcade.View):
 
         self.bullet_list = arcade.SpriteList()
         self.cannon_fire_timers = {}
+        
+        self.is_on_quicksand = False
+        self.current_movement_speed =  MOVEMENT_SPEED
+    
 
     def setup(self):
         layer_options = {
@@ -210,10 +217,16 @@ class GameView(arcade.View):
             },
             "moving_danger": {
                 "use_spatial_hash": True
+            },
+            "Bounce": {
+                "use_spatial_hash": True
+            },
+            "Quicksand": {
+                "use_spatial_hash": True
             }
         }
 
-        map_path = os.path.join(os.path.dirname(__file__), f"level{self.level}.tmx")
+        map_path = os.path.join(os.path.dirname(__file__), f"level3.tmx")
 
         self.tile_map = arcade.load_tilemap(
             map_path,
@@ -257,6 +270,11 @@ class GameView(arcade.View):
 
         self.moving_danger_list = arcade.SpriteList()
         self.cannon_list = arcade.SpriteList()
+        
+        self.bounce_list = arcade.SpriteList()
+        
+        if "Bounce" in self.scene:
+            self.bounce_list = self.scene["Bounce"]
 
         if "Cannon" in self.scene:
             self.cannon_list = self.scene["Cannon"]
@@ -275,7 +293,7 @@ class GameView(arcade.View):
 
         if "y_moving_platform" in self.scene:
             for platform in self.scene["y_moving_platform"]:
-                platform.boundary_top = platform.center_y + 370
+                platform.boundary_top = platform.center_y + 400
                 platform.boundary_bottom = platform.center_y
 
         if "moving_danger" in self.scene:
@@ -304,6 +322,7 @@ class GameView(arcade.View):
             all_platforms.extend(self.scene["UpMovingPlatforms"])
         if "DownMovingPlatforms" in self.scene:
             all_platforms.extend(self.scene["DownMovingPlatforms"])
+            
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             self.player, walls=self.scene["Platform"],
@@ -320,7 +339,7 @@ class GameView(arcade.View):
         
         if "Cannon" in self.scene:
             for cannon in self.scene["Cannon"]:
-                self.cannon_fire_timers[cannon] = random.uniform(1, 75)
+                self.cannon_fire_timers[cannon] = random.uniform(1, 50)
 
     def on_draw(self):
         self.clear()
@@ -374,6 +393,7 @@ class GameView(arcade.View):
         self.scene["Diamond"].update_animation(delta_time)
         self.moving_danger_list.update_animation(delta_time)
         self.cannon_list.update_animation(delta_time)
+        self.scene["Danger"].update_animation(delta_time)
         self.scene.update(delta_time)
 
         self.time_taken += delta_time
@@ -406,6 +426,32 @@ class GameView(arcade.View):
             moving_danger_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["moving_danger"])
             if moving_danger_hit_list:
                 self.player_dies()
+                
+        if "Bounce" in self.scene:
+            bounce_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Bounce"])
+            if bounce_hit_list:
+                self.player.change_y = 10
+                self.player.jump_count = 1
+                
+        quicksand_hit_list = []
+        if "Quicksand" in self.scene:
+            quicksand_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Quicksand"])
+            
+        if quicksand_hit_list:
+            if not self.is_on_quicksand:
+                self.is_on_quicksand = True
+                self.current_movement_speed = MOVEMENT_SPEED * QUICKSAND_SPEED_DEBUFF
+                
+            if self.player.change_x != 0:
+                self.player.change_x = self.player.change_x  / abs(self.player.change_x) * self.current_movement_speed
+        else:
+            if self.is_on_quicksand:
+                self.is_on_quicksand = False
+                self.current_movement_speed = MOVEMENT_SPEED
+                
+                if self.player.change_x != 0:
+                    self.player.change_x = self.player.change_x / abs(self.player.change_x) * self.current_movement_speed     
+                
 
         
         self.bullet_list.update(delta_time) 
@@ -427,7 +473,7 @@ class GameView(arcade.View):
                 self.cannon_fire_timers[cannon] -= delta_time
                 if self.cannon_fire_timers[cannon] <= 0:
                     self.fire_bullet_from_cannon(cannon)
-                    self.cannon_fire_timers[cannon] = random.uniform(1, 3) 
+                    self.cannon_fire_timers[cannon] = random.uniform(1, 10) 
 
         if self.physics_engine.can_jump():
             self.player.jump_count = 0
@@ -479,9 +525,9 @@ class GameView(arcade.View):
                 self.player.jump_count += 1
 
         elif key in (arcade.key.LEFT, arcade.key.A):
-            self.player.change_x = -MOVEMENT_SPEED
+            self.player.change_x = -self.current_movement_speed
         elif key in (arcade.key.RIGHT, arcade.key.D):
-            self.player.change_x = MOVEMENT_SPEED
+            self.player.change_x = self.current_movement_speed
         elif key in (arcade.key.ESCAPE, arcade.key.Q):
             arcade.close_window()
 
