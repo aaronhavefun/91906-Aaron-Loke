@@ -1,501 +1,469 @@
-import arcade
+"""
+Platformer Game
+
+python -m arcade.examples.platform_tutorial.11_animate_character
+"""
+import math
 import os
-import random
+
+import arcade
 
 # Constants
-WINDOW_WIDTH = 1600
-WINDOW_HEIGHT = 900
-WINDOW_TITLE = "Frog Adventures"
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 650
+SCREEN_TITLE = "Platformer"
 
-TILE_SCALING = 1
-PLAYER_JUMP_SPEED = 3
-PLAYER_DOUBLE_JUMP_SPEED = 2
-GRAVITY = .25
+# Constants used to scale our sprites from their original size
+TILE_SCALING = 0.5
+CHARACTER_SCALING = TILE_SCALING * 2
+COIN_SCALING = TILE_SCALING
+SPRITE_PIXEL_SIZE = 128
+GRID_PIXEL_SIZE = SPRITE_PIXEL_SIZE * TILE_SCALING
 
-MOVEMENT_SPEED = .6
-UPDATES_PER_FRAME = 5
+# Movement speed of player, in pixels per frame
+PLAYER_MOVEMENT_SPEED = 7
+GRAVITY = 1.5
+PLAYER_JUMP_SPEED = 30
 
+PLAYER_START_X = 2
+PLAYER_START_Y = 1
+
+# Constants used to track if the player is facing left or right
 RIGHT_FACING = 0
 LEFT_FACING = 1
 
-CHARACTER_SCALING = 1
-FOLLOW_DECAY_CONST = 0.3
-
-PLAYER_CLIMB_SPEED = .5
-
-# Bullet Constants
-BULLET_SPEED = -1
-BULLET_TEXTURE = "rocky_roads/Enemies/bullet.png" 
-BULLET_SCALING = 0.5
+LAYER_NAME_MOVING_PLATFORMS = "Moving Platforms"
+LAYER_NAME_PLATFORMS = "Platforms"
+LAYER_NAME_COINS = "Coins"
+LAYER_NAME_BACKGROUND = "Background"
+LAYER_NAME_LADDERS = "Ladders"
+LAYER_NAME_PLAYER = "Player"
+LAYER_NAME_ENEMIES = "Enemies"
 
 
-class MenuView(arcade.View):
-    def on_show_view(self):
-        self.window.background_color = arcade.color.COSMIC_LATTE
-
-    def on_draw(self):
-        self.clear()
-        arcade.draw_text("Welcome to Frog Adventures", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, arcade.color.BLACK, font_size=50, anchor_x="center")
-        arcade.draw_text("Click to advance", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 75, arcade.color.GRAY, font_size=25, anchor_x="center")
-
-    def on_mouse_press(self, _x, _y, _button, _modifiers):
-        instruction_view = InstructionView()
-        self.window.show_view(instruction_view)
+def load_texture_pair(filename):
+    """
+    Load a texture pair, with the second being a mirror image.
+    """
+    return [
+        arcade.load_texture(filename),
+        arcade.load_texture(filename, flipped_horizontally=True),
+    ]
 
 
-class InstructionView(arcade.View):
-    def on_show_view(self):
-        self.window.background_color = arcade.color.GO_GREEN
-
-    def on_draw(self):
-        self.clear()
-        arcade.draw_text("You are a Frog, and must collect all the coins and diamonds, securing them in your chest.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2,
-                         arcade.color.BLACK, font_size=25, anchor_x="center")
-        arcade.draw_text("A/D to move left and right, Space to jump, and double tap jump to double jump.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 75,
-                         arcade.color.GRAY, font_size=20, anchor_x="center")
-        arcade.draw_text("Click to advance", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 175, arcade.color.GRAY, font_size=20, anchor_x="center")
-
-    def on_mouse_press(self, _x, _y, _button, _modifiers):
-        game_view = GameView()
-        game_view.setup()
-        self.window.show_view(game_view)
-
-
-class GameOverView(arcade.View):
-    def __init__(self, final_score, final_time):
+class Entity(arcade.Sprite):
+    def __init__(self, name_folder, name_file):
         super().__init__()
-        self.final_score = final_score
-        self.final_time = f"{final_time:.2f}s"
 
-    def on_show_view(self):
-        arcade.set_background_color(arcade.color.BLACK)
+        # Default to facing right
+        self.facing_direction = RIGHT_FACING
 
-    def on_draw(self):
-        self.clear()
-        arcade.draw_text("Game Over", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 100, arcade.color.RED, 60, anchor_x="center")
-        arcade.draw_text(f"Final Score and Time: {self.final_score} and {self.final_time}.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 25, arcade.color.RED, 60, anchor_x="center")
-        arcade.draw_text(f"Click to restart, or ENTER to quit.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 150, arcade.color.RED, 60, anchor_x="center")
-
-    def on_key_press(self, key, modifiers):
-        if key == arcade.key.ENTER:
-            arcade.exit()
-
-    def on_mouse_press(self, _x, _y, _button, _modifiers):
-        game_view = GameView()
-        game_view.setup()
-        self.window.show_view(game_view)
-
-
-class PlayerCharacter(arcade.Sprite):
-    def __init__(self, idle_texture_pairs, walk_texture_pairs, jump_texture_pairs):
-        self.character_face_direction = RIGHT_FACING
+        # Used for image sequences
         self.cur_texture = 0
+        self.scale = CHARACTER_SCALING
+        self.character_face_direction = RIGHT_FACING
 
-        self.idle_texture_pairs = idle_texture_pairs
-        self.walk_textures = walk_texture_pairs
-        self.jump_texture_pairs = jump_texture_pairs
+        main_path = f":resources:images/animated_characters/{name_folder}/{name_file}"
 
-        super().__init__(self.idle_texture_pairs[0], scale=CHARACTER_SCALING)
+        self.idle_texture_pair = load_texture_pair(f"{main_path}_idle.png")
+        self.jump_texture_pair = load_texture_pair(f"{main_path}_jump.png")
+        self.fall_texture_pair = load_texture_pair(f"{main_path}_fall.png")
 
-        self.jump_count = 0
-        self.max_jumps = 2
+        # Load textures for walking
+        self.walk_textures = []
+        for i in range(8):
+            texture = load_texture_pair(f"{main_path}_walk{i}.png")
+            self.walk_textures.append(texture)
+
+        # Load textures for climbing
+        self.climbing_textures = []
+        texture = arcade.load_texture(f"{main_path}_climb0.png")
+        self.climbing_textures.append(texture)
+        texture = arcade.load_texture(f"{main_path}_climb1.png")
+        self.climbing_textures.append(texture)
+
+        # Set the initial texture
+        self.texture = self.idle_texture_pair[0]
+
+        # Hit box will be set based on the first image used. If you want to specify
+        # a different hit box, you can do it like the code below.
+        # set_hit_box = [[-22, -64], [22, -64], [22, 28], [-22, 28]]
+        self.hit_box = self.texture.hit_box_points
+
+
+class Enemy(Entity):
+    def __init__(self, name_folder, name_file):
+
+        # Setup parent class
+        super().__init__(name_folder, name_file)
+
+
+class RobotEnemy(Enemy):
+    def __init__(self):
+
+        # Set up parent class
+        super().__init__("robot", "robot")
+
+
+class ZombieEnemy(Enemy):
+    def __init__(self):
+
+        # Set up parent class
+        super().__init__("zombie", "zombie")
+
+
+class PlayerCharacter(Entity):
+    """Player Sprite"""
+
+    def __init__(self):
+
+        # Set up parent class
+        super().__init__("male_person", "malePerson")
+
+        # Track our state
+        self.jumping = False
+        self.climbing = False
+        self.is_on_ladder = False
 
     def update_animation(self, delta_time: float = 1 / 60):
-        if self.change_x < 0:
-            self.character_face_direction = LEFT_FACING
-        elif self.change_x > 0:
-            self.character_face_direction = RIGHT_FACING
 
-        if self.change_y > 0:
+        # Figure out if we need to flip face left or right
+        if self.change_x < 0 and self.facing_direction == RIGHT_FACING:
+            self.facing_direction = LEFT_FACING
+        elif self.change_x > 0 and self.facing_direction == LEFT_FACING:
+            self.facing_direction = RIGHT_FACING
+
+        # Climbing animation
+        if self.is_on_ladder:
+            self.climbing = True
+        if not self.is_on_ladder and self.climbing:
+            self.climbing = False
+        if self.climbing and abs(self.change_y) > 1:
             self.cur_texture += 1
-            if self.cur_texture >= len(self.jump_texture_pairs) * UPDATES_PER_FRAME:
+            if self.cur_texture > 7:
                 self.cur_texture = 0
-            frame = self.cur_texture // UPDATES_PER_FRAME
-            direction = self.character_face_direction
-            self.texture = self.jump_texture_pairs[frame][direction]
+        if self.climbing:
+            self.texture = self.climbing_textures[self.cur_texture // 4]
             return
 
+        # Jumping animation
+        if self.change_y > 0 and not self.is_on_ladder:
+            self.texture = self.jump_texture_pair[self.facing_direction]
+            return
+        elif self.change_y < 0 and not self.is_on_ladder:
+            self.texture = self.fall_texture_pair[self.facing_direction]
+            return
 
+        # Idle animation
         if self.change_x == 0:
-            self.cur_texture += 1
-            if self.cur_texture >= len(self.idle_texture_pairs) * UPDATES_PER_FRAME:
-                self.cur_texture = 0
-            frame = self.cur_texture // UPDATES_PER_FRAME
-            direction = self.character_face_direction
-            self.texture = self.idle_texture_pairs[frame][direction]
+            self.texture = self.idle_texture_pair[self.facing_direction]
             return
 
+        # Walking animation
         self.cur_texture += 1
-        if self.cur_texture >= 8 * UPDATES_PER_FRAME:
+        if self.cur_texture > 7:
             self.cur_texture = 0
-        frame = self.cur_texture // UPDATES_PER_FRAME
-        direction = self.character_face_direction
-        self.texture = self.walk_textures[frame][direction]
+        self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
 
 
-class Bullet(arcade.Sprite):
-    def __init__(self, filename, scale):
-        super().__init__(filename, scale)
-        self.should_be_removed = False
+class MyGame(arcade.Window):
+    """
+    Main application class.
+    """
 
-    def update(self, delta_time: float = 1/60): 
-        super().update()
-        if self.right < 0 or self.left > WINDOW_WIDTH or self.bottom < 0 or self.top > WINDOW_HEIGHT:
-            self.should_be_removed = True
-
-
-class GameView(arcade.View):
     def __init__(self):
-        super().__init__()
+        """
+        Initializer for the game
+        """
 
+        # Call the parent class and set up the window
+        super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+
+        # Set the path to start with this program
+        file_path = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(file_path)
+
+        # Track the current state of what key is pressed
+        self.left_pressed = False
+        self.right_pressed = False
+        self.up_pressed = False
+        self.down_pressed = False
+        self.jump_needs_reset = False
+
+        # Our TileMap Object
         self.tile_map = None
+
+        # Our Scene Object
         self.scene = None
-        self.camera = None
-        self.gui_camera = None
-        self.player_sprite_list = None
+
+        # Separate variable that holds the player sprite
+        self.player_sprite = None
+
+        # Our 'physics' engine
         self.physics_engine = None
 
-        self.player = None
+        # A Camera that can be used for scrolling the screen
+        self.camera = None
 
-        self.lives = 3
-        self.font_size = 20
-        self.font_color = arcade.color.WHITE
+        # A Camera that can be used to draw GUI elements
+        self.gui_camera = None
 
+        self.end_of_map = 0
+
+        # Keep track of the score
         self.score = 0
-        self.level = 1
-        self.time_taken = 0
 
-        self.view_bottom = 0
-        self.view_left = 0
-
-        character = "frog_man/frog_man"
-
-        self.idle_texture_pairs = []
-        for i in range(8):
-            texture = arcade.load_texture(f"{character}_idle{i}.png")
-            self.idle_texture_pairs.append((texture, texture.flip_left_right()))
-
-        self.walk_texture_pairs = []
-        for i in range(8):
-            texture = arcade.load_texture(f"{character}_walk{i}.png")
-            self.walk_texture_pairs.append((texture, texture.flip_left_right()))
-
-        self.jump_texture_pairs = []
-        for i in range(2):
-            texture = arcade.load_texture(f"{character}_jump{i}.png")
-            self.jump_texture_pairs.append((texture, texture.flip_left_right()))
-
-        self.bullet_list = arcade.SpriteList()
-        self.cannon_fire_timers = {}
+        # Load sounds
+        self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
+        self.jump_sound = arcade.load_sound(":resources:sounds/jump1.wav")
+        self.game_over = arcade.load_sound(":resources:sounds/gameover1.wav")
 
     def setup(self):
+        """Set up the game here. Call this function to restart the game."""
+
+        # Set up the Cameras
+        self.camera = arcade.Camera2D(self.width, self.height)
+        self.gui_camera = arcade.Camera2D(self.width, self.height)
+
+        # Map name
+        map_name = ":resources:tiled_maps/map_with_ladders.json"
+
+        # Layer Specific Options for the Tilemap
         layer_options = {
-            "Platform": {
-                "use_spatial_hash": True
+            LAYER_NAME_PLATFORMS: {
+                "use_spatial_hash": True,
             },
-            "Coins": {
-                "use_spatial_hash": True
+            LAYER_NAME_MOVING_PLATFORMS: {
+                "use_spatial_hash": False,
             },
-            "Danger": {
-                "use_spatial_hash": True
+            LAYER_NAME_LADDERS: {
+                "use_spatial_hash": True,
             },
-            "Diamond": {
-                "use_spatial_hash": True
+            LAYER_NAME_COINS: {
+                "use_spatial_hash": True,
             },
-            "x_moving_platform": {
-                "use_spatial_hash": True
-            },
-            "y_moving_platform": {
-                "use_spatial_hash": True
-            },
-            "moving_danger": {
-                "use_spatial_hash": True
-            }
         }
 
-        map_path = os.path.join(os.path.dirname(__file__), f"level3.tmx")
+        # Load in TileMap
+        self.tile_map = arcade.load_tilemap(map_name, TILE_SCALING, layer_options)
 
-        self.tile_map = arcade.load_tilemap(
-            map_path,
-            scaling=TILE_SCALING,
-            layer_options=layer_options,
-        )
-
+        # Initiate New Scene with our TileMap, this will automatically add all layers
+        # from the map as SpriteLists in the scene in the proper order.
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
-        zoom_level = 3
-        self.camera = arcade.Camera2D()
-        self.camera.zoom = zoom_level
+        # Keep track of the score
+        self.score = 0
 
-        map_width_pixels = self.tile_map.width * self.tile_map.tile_width
-        map_height_pixels = self.tile_map.height * self.tile_map.tile_height
-
-        half_screen_width = (self.window.width / 2) / zoom_level
-        half_screen_height = (self.window.height / 2) / zoom_level
-
-        self.camera_bounds = arcade.LRBT(
-            left=half_screen_width,
-            right=map_width_pixels - half_screen_width,
-            bottom=half_screen_height,
-            top=map_height_pixels - half_screen_height
+        # Set up the player, specifically placing it at these coordinates.
+        self.player_sprite = PlayerCharacter()
+        self.player_sprite.center_x = (
+            self.tile_map.tile_width * TILE_SCALING * PLAYER_START_X
         )
-
-        self.player_sprite_list = arcade.SpriteList()
-
-        self.player = PlayerCharacter(
-            self.idle_texture_pairs,
-            self.walk_texture_pairs,
-            self.jump_texture_pairs,
+        self.player_sprite.center_y = (
+            self.tile_map.tile_height * TILE_SCALING * PLAYER_START_Y
         )
-        self.player.center_x = 50
-        self.player.center_y = 160
-        self.spawn_x = self.player.center_x
-        self.spawn_y = self.player.center_y
-        self.player_sprite_list.append(self.player)
-        self.scene.add_sprite("Player", self.player)
-        self.scene.add_sprite_list_before("Foreground", "Player")
+        self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
 
-        self.moving_danger_list = arcade.SpriteList()
-        if "moving_danger" in self.scene:
-            self.moving_danger_list = self.scene["moving_danger"]
+        # Calculate the right edge of the my_map in pixels
+        self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
 
-        self.jump_key_pressed = False
+        # -- Enemies
+        enemies_layer = self.tile_map.object_lists[LAYER_NAME_ENEMIES]
 
-        self.ladder_list = self.scene["Ladder"] if "Ladder" in self.scene else arcade.SpriteList()
+        for my_object in enemies_layer:
+            cartesian = self.tile_map.get_cartesian(
+                my_object.shape[0], my_object.shape[1]
+            )
+            enemy_type = my_object.properties["type"]
+            if enemy_type == "robot":
+                enemy = RobotEnemy()
+            elif enemy_type == "zombie":
+                enemy = ZombieEnemy()
+            else:
+                raise Exception(f"Unknown enemy type {enemy_type}.")
+            enemy.center_x = math.floor(
+                cartesian[0] * TILE_SCALING * self.tile_map.tile_width
+            )
+            enemy.center_y = math.floor(
+                (cartesian[1] + 1) * (self.tile_map.tile_height * TILE_SCALING)
+            )
+            self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
 
-        if "x_moving_platform" in self.scene:
-            for platform in self.scene["x_moving_platform"]:
-                platform.boundary_left = platform.center_x
-                platform.boundary_right = platform.center_x + 260
+        # --- Other stuff
+        # Set the background color
+        if self.tile_map.background_color:
+            arcade.set_background_color(self.tile_map.background_color)
 
-        if "y_moving_platform" in self.scene:
-            for platform in self.scene["y_moving_platform"]:
-                platform.boundary_top = platform.center_y + 370
-                platform.boundary_bottom = platform.center_y
-
-        if "moving_danger" in self.scene:
-            for platform in self.scene["moving_danger"]:
-                platform.boundary_top = platform.center_y + 155
-                platform.boundary_bottom = platform.center_y
-
-        if "UpMovingPlatforms" in self.scene:
-            for platform in self.scene["UpMovingPlatforms"]:
-                platform.boundary_top = platform.center_y + 400
-                platform.boundary_bottom = platform.center_y
-
-        if "DownMovingPlatforms" in self.scene:
-            for platform in self.scene["DownMovingPlatforms"]:
-                platform.boundary_top = platform.center_y
-                platform.boundary_bottom = platform.center_y - 400
-
-        all_platforms = arcade.SpriteList()
-        if "x_moving_platform" in self.scene:
-            all_platforms.extend(self.scene["x_moving_platform"])
-        if "y_moving_platform" in self.scene:
-            all_platforms.extend(self.scene["y_moving_platform"])
-        if "moving_danger" in self.scene:
-            all_platforms.extend(self.scene["moving_danger"])
-        if "UpMovingPlatforms" in self.scene:
-            all_platforms.extend(self.scene["UpMovingPlatforms"])
-        if "DownMovingPlatforms" in self.scene:
-            all_platforms.extend(self.scene["DownMovingPlatforms"])
-        
-
+        # Create the 'physics engine'
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            self.player, walls=self.scene["Platform"],
-            platforms=all_platforms,
-            gravity_constant=GRAVITY
+            self.player_sprite,
+            platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+            gravity_constant=GRAVITY,
+            ladders=self.scene[LAYER_NAME_LADDERS],
+            walls=self.scene[LAYER_NAME_PLATFORMS]
         )
-
-        self.gui_camera = arcade.Camera2D()
-
-        self.background_color = arcade.csscolor.CORNFLOWER_BLUE
-
-        self.camera.zoom = 3
-
-        
-        if "Cannon" in self.scene:
-            for cannon in self.scene["Cannon"]:
-                self.cannon_fire_timers[cannon] = random.uniform(1, 3)
 
     def on_draw(self):
+        """Render the screen."""
+
+        # Clear the screen to the background color
         self.clear()
+
+        # Activate the game camera
         self.camera.use()
+
+        # Draw our Scene
         self.scene.draw()
-        self.bullet_list.draw() 
+
+        # Activate the GUI camera before drawing GUI elements
         self.gui_camera.use()
 
+        # Draw our score on the screen, scrolling it with the viewport
+        score_text = f"Score: {self.score}"
         arcade.draw_text(
-            f"Lives Remaining: {self.lives}",
-            10, WINDOW_HEIGHT - 30,
-            font_size=self.font_size,
-            color=self.font_color
+            score_text,
+            10,
+            10,
+            arcade.csscolor.BLACK,
+            18,
         )
 
-        arcade.draw_text(
-            f"Score: {self.score}",
-            10, WINDOW_HEIGHT - 60,
-            font_size=self.font_size,
-            color=self.font_color
-        )
+    def process_keychange(self):
+        """
+        Called when we change a key up/down or we move on/off a ladder.
+        """
+        # Process up/down
+        if self.up_pressed and not self.down_pressed:
+            if self.physics_engine.is_on_ladder():
+                self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
+            elif (
+                self.physics_engine.can_jump(y_distance=10)
+                and not self.jump_needs_reset
+            ):
+                self.player_sprite.change_y = PLAYER_JUMP_SPEED
+                self.jump_needs_reset = True
+                arcade.play_sound(self.jump_sound)
+        elif self.down_pressed and not self.up_pressed:
+            if self.physics_engine.is_on_ladder():
+                self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
 
-        arcade.draw_text(
-            f"Time Taken: {self.time_taken}",
-            10, WINDOW_HEIGHT - 90,
-            font_size=self.font_size,
-            color=self.font_color
-        )
+        # Process up/down when on a ladder and no movement
+        if self.physics_engine.is_on_ladder():
+            if not self.up_pressed and not self.down_pressed:
+                self.player_sprite.change_y = 0
+            elif self.up_pressed and self.down_pressed:
+                self.player_sprite.change_y = 0
 
-    def center_camera_to_player(self):
-        self.camera.position = arcade.math.smerp_2d(
-            self.camera.position,
-            self.player.position,
-            self.window.delta_time,
-            FOLLOW_DECAY_CONST,
-        )
-        self.camera.view_data.position = arcade.camera.grips.constrain_xy(
-            self.camera.view_data, self.camera_bounds
-        )
-
-    def on_resize(self, width: int, height: int):
-        super().on_resize(width, height)
-        self.camera.match_window
-        self.gui_camera.match_window(position=True)
-
-    def on_update(self, delta_time):
-        self.physics_engine.update()
-        self.player_sprite_list.update()
-        self.player.update_animation(delta_time)
-        self.scene["Coins"].update_animation(delta_time)
-        self.scene["Diamond"].update_animation(delta_time)
-        self.moving_danger_list.update_animation(delta_time)
-        self.scene["Cannon"].update_animation(delta_time)
-        self.scene.update(delta_time)
-
-        self.time_taken += delta_time
-
-        self.center_camera_to_player()
-
-        map_left = 0
-        map_right = self.tile_map.width * self.tile_map.tile_width
-
-        if self.player.left < map_left:
-            self.player.left = map_left
-        elif self.player.right > map_right:
-            self.player.right = map_right
-
-        is_on_ladder = arcade.check_for_collision_with_list(self.player, self.ladder_list)
-
-        if is_on_ladder:
-            self.player.change_y = 0
-
-            if self.jump_key_pressed:
-                self.player.change_y = PLAYER_CLIMB_SPEED
-
-        
-        if "Danger" in self.scene:
-            danger_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Danger"])
-            if danger_hit_list:
-                self.player_dies()
-
-        if "moving_danger" in self.scene:
-            moving_danger_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["moving_danger"])
-            if moving_danger_hit_list:
-                self.player_dies()
-
-        
-        self.bullet_list.update(delta_time) 
-
-        
-        for bullet in self.bullet_list:
-            if bullet.should_be_removed:
-                bullet.remove_from_sprite_lists()
-
-        
-        bullet_hit_list = arcade.check_for_collision_with_list(self.player, self.bullet_list)
-        for bullet in bullet_hit_list:
-            bullet.remove_from_sprite_lists()
-            self.player_dies()
-
-        
-        if "Cannon" in self.scene:
-            for cannon in self.scene["Cannon"]:
-                self.cannon_fire_timers[cannon] -= delta_time
-                if self.cannon_fire_timers[cannon] <= 0:
-                    self.fire_bullet_from_cannon(cannon)
-                    self.cannon_fire_timers[cannon] = random.uniform(1, 3) 
-
-        if self.physics_engine.can_jump():
-            self.player.jump_count = 0
-
-        coin_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Coins"])
-
-        for coin in coin_hit_list:
-            coin.remove_from_sprite_lists()
-            self.score += 1
-
-        diamond_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Diamond"])
-
-        for diamond in diamond_hit_list:
-            diamond.remove_from_sprite_lists()
-            self.score += 5
-
-        if "Chest" in self.scene:
-            chest_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Chest"])
-            if chest_hit_list:
-                self.level += 1
-                self.setup()
-
-    def player_dies(self):
-        self.lives -= 1
-        if self.lives > 0:
-            self.player.center_x = self.spawn_x
-            self.player.center_y = self.spawn_y
-            self.player.change_y = 0
-            
+        # Process left/right
+        if self.right_pressed and not self.left_pressed:
+            self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
+        elif self.left_pressed and not self.right_pressed:
+            self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
         else:
-            game_over_view = GameOverView(self.score, self.time_taken)
-            self.window.show_view(game_over_view)
-
-    def fire_bullet_from_cannon(self, cannon):
-        bullet = Bullet(BULLET_TEXTURE, BULLET_SCALING)
-        bullet.center_x = cannon.center_x
-        bullet.center_y = cannon.center_y
-        bullet.change_x = BULLET_SPEED
-        self.bullet_list.append(bullet)
-
+            self.player_sprite.change_x = 0
 
     def on_key_press(self, key, modifiers):
-        if key in (arcade.key.UP, arcade.key.SPACE):
-            if self.physics_engine.can_jump():
-                self.player.change_y = PLAYER_JUMP_SPEED
-                self.player.jump_count = 1
-            elif self.player.jump_count == 1:
-                self.player.change_y = PLAYER_DOUBLE_JUMP_SPEED
-                self.player.jump_count += 1
+        """Called whenever a key is pressed."""
 
-        elif key in (arcade.key.LEFT, arcade.key.A):
-            self.player.change_x = -MOVEMENT_SPEED
-        elif key in (arcade.key.RIGHT, arcade.key.D):
-            self.player.change_x = MOVEMENT_SPEED
-        elif key in (arcade.key.ESCAPE, arcade.key.Q):
-            arcade.close_window()
+        if key == arcade.key.UP or key == arcade.key.W:
+            self.up_pressed = True
+        elif key == arcade.key.DOWN or key == arcade.key.S:
+            self.down_pressed = True
+        elif key == arcade.key.LEFT or key == arcade.key.A:
+            self.left_pressed = True
+        elif key == arcade.key.RIGHT or key == arcade.key.D:
+            self.right_pressed = True
 
-        if key == arcade.key.UP or key == arcade.key.SPACE:
-            self.jump_key_pressed = True
+        self.process_keychange()
 
     def on_key_release(self, key, modifiers):
-        if key in (arcade.key.LEFT, arcade.key.RIGHT, arcade.key.A, arcade.key.D):
-            self.player.change_x = 0
+        """Called when the user releases a key."""
 
-        if key == arcade.key.UP or key == arcade.key.SPACE:
-            self.jump_key_pressed = False
+        if key == arcade.key.UP or key == arcade.key.W:
+            self.up_pressed = False
+            self.jump_needs_reset = False
+        elif key == arcade.key.DOWN or key == arcade.key.S:
+            self.down_pressed = False
+        elif key == arcade.key.LEFT or key == arcade.key.A:
+            self.left_pressed = False
+        elif key == arcade.key.RIGHT or key == arcade.key.D:
+            self.right_pressed = False
+
+        self.process_keychange()
+
+    def center_camera_to_player(self):
+        screen_center_x = self.player_sprite.center_x - (self.camera.viewport_width / 2)
+        screen_center_y = self.player_sprite.center_y - (
+            self.camera.viewport_height / 2
+        )
+        if screen_center_x < 0:
+            screen_center_x = 0
+        if screen_center_y < 0:
+            screen_center_y = 0
+        player_centered = screen_center_x, screen_center_y
+
+        self.camera.move_to(player_centered, 0.2)
+
+    def on_update(self, delta_time):
+        """Movement and game logic"""
+
+        # Move the player with the physics engine
+        self.physics_engine.update()
+
+        # Update animations
+        if self.physics_engine.can_jump():
+            self.player_sprite.can_jump = False
+        else:
+            self.player_sprite.can_jump = True
+
+        if self.physics_engine.is_on_ladder() and not self.physics_engine.can_jump():
+            self.player_sprite.is_on_ladder = True
+            self.process_keychange()
+        else:
+            self.player_sprite.is_on_ladder = False
+            self.process_keychange()
+
+        # Update Animations
+        self.scene.update_animation(
+            delta_time,
+            [
+                LAYER_NAME_COINS,
+                LAYER_NAME_BACKGROUND,
+                LAYER_NAME_PLAYER,
+                LAYER_NAME_ENEMIES,
+            ],
+        )
+
+        # Update walls, used with moving platforms
+        self.scene.update([LAYER_NAME_MOVING_PLATFORMS])
+
+        # See if we hit any coins
+        coin_hit_list = arcade.check_for_collision_with_list(
+            self.player_sprite, self.scene[LAYER_NAME_COINS]
+        )
+
+        # Loop through each coin we hit (if any) and remove it
+        for coin in coin_hit_list:
+
+            # Figure out how many points this coin is worth
+            if "Points" not in coin.properties:
+                print("Warning, collected a coin without a Points property.")
+            else:
+                points = int(coin.properties["Points"])
+                self.score += points
+
+            # Remove the coin
+            coin.remove_from_sprite_lists()
+            arcade.play_sound(self.collect_coin_sound)
+
+        # Position the camera
+        self.center_camera_to_player()
 
 
 def main():
-    window = arcade.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
-    menu_view = MenuView()
-    window.show_view(menu_view)
+    """Main function"""
+    window = MyGame()
+    window.setup()
     arcade.run()
 
 

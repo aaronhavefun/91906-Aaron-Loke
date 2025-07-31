@@ -252,6 +252,9 @@ class GameView(arcade.View):
             "Quicksand": {
                 "use_spatial_hash": True
             },
+            "CrabEnemy": {
+                "use_spatial_hash": True
+            }
             
         }
 
@@ -299,8 +302,8 @@ class GameView(arcade.View):
 
         self.moving_danger_list = arcade.SpriteList()
         self.cannon_list = arcade.SpriteList()
-        
         self.bounce_list = arcade.SpriteList()
+        self.crab_enemy_list = arcade.SpriteList()
         
         if "Bounce" in self.scene:
             self.bounce_list = self.scene["Bounce"]
@@ -310,6 +313,9 @@ class GameView(arcade.View):
 
         if "moving_danger" in self.scene:
             self.moving_danger_list = self.scene["moving_danger"]
+            
+        if "CrabEnemy" in self.scene:
+            self.crab_enemy_list = self.scene["CrabEnemy"]
 
         self.jump_key_pressed = False
 
@@ -339,6 +345,11 @@ class GameView(arcade.View):
             for platform in self.scene["DownMovingPlatforms"]:
                 platform.boundary_top = platform.center_y
                 platform.boundary_bottom = platform.center_y - 400
+                
+        if "CrabEnemy" in self.scene: 
+            for enemy in self.scene["CrabEnemy"]:
+                enemy.boundary_left = enemy.center_x
+                enemy.boundary_right = enemy.center_x + 250
 
         all_platforms = arcade.SpriteList()
         if "x_moving_platform" in self.scene:
@@ -351,6 +362,8 @@ class GameView(arcade.View):
             all_platforms.extend(self.scene["UpMovingPlatforms"])
         if "DownMovingPlatforms" in self.scene:
             all_platforms.extend(self.scene["DownMovingPlatforms"])
+        if "CrabEnemy" in self.scene:
+            all_platforms.extend(self.scene["CrabEnemy"])
             
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(
@@ -423,6 +436,7 @@ class GameView(arcade.View):
         self.moving_danger_list.update_animation(delta_time)
         self.cannon_list.update_animation(delta_time)
         self.scene["Danger"].update_animation(delta_time)
+        self.scene["CrabEnemy"].update_animation(delta_time)
         self.scene.update(delta_time)
 
         self.time_taken += delta_time
@@ -454,6 +468,11 @@ class GameView(arcade.View):
         if "moving_danger" in self.scene:
             moving_danger_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["moving_danger"])
             if moving_danger_hit_list:
+                self.player_dies()
+                
+        if "CrabEnemy" in self.scene:
+            crab_enemy_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["CrabEnemy"])
+            if crab_enemy_hit_list:
                 self.player_dies()
                 
         if "Bounce" in self.scene:

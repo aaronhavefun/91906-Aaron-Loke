@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.11.2" name="danger" tilewidth="256" tileheight="38" tilecount="21" columns="0">
+<tileset version="1.10" tiledversion="1.11.2" name="danger" tilewidth="256" tileheight="38" tilecount="28" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <image source="Traps/Saw/Off.png" width="38" height="38"/>
@@ -83,5 +83,35 @@
  </tile>
  <tile id="21">
   <image source="rocky_roads/Enemies/quicksand_8frames.png" width="256" height="32"/>
+ </tile>
+ <tile id="22">
+  <image source="rocky_roads/Enemies/animated_crab0.png" width="32" height="16"/>
+  <animation>
+   <frame tileid="22" duration="100"/>
+   <frame tileid="23" duration="100"/>
+   <frame tileid="24" duration="100"/>
+   <frame tileid="25" duration="100"/>
+   <frame tileid="26" duration="100"/>
+   <frame tileid="27" duration="100"/>
+   <frame tileid="28" duration="100"/>
+  </animation>
+ </tile>
+ <tile id="23">
+  <image source="rocky_roads/Enemies/animated_crab1.png" width="32" height="16"/>
+ </tile>
+ <tile id="24">
+  <image source="rocky_roads/Enemies/animated_crab2.png" width="32" height="16"/>
+ </tile>
+ <tile id="25">
+  <image source="rocky_roads/Enemies/animated_crab3.png" width="32" height="16"/>
+ </tile>
+ <tile id="26">
+  <image source="rocky_roads/Enemies/animated_crab4.png" width="32" height="16"/>
+ </tile>
+ <tile id="27">
+  <image source="rocky_roads/Enemies/animated_crab6.png" width="32" height="16"/>
+ </tile>
+ <tile id="28">
+  <image source="rocky_roads/Enemies/animated_crab7.png" width="32" height="16"/>
  </tile>
 </tileset>
