@@ -3,8 +3,8 @@ import os
 import random
 
 # Constants for the game
-WINDOW_WIDTH = 1600
-WINDOW_HEIGHT = 900
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 720
 WINDOW_TITLE = "Frog Adventures"
 
 TILE_SCALING = 1
@@ -380,7 +380,7 @@ class GameView(arcade.View):
         }
 
         map_path = os.path.join(os.path.dirname(__file__),
-                                f"level3.tmx")
+                                f"level2.tmx")
         
         if not os.path.exists(map_path):
             raise FileNotFoundError(f"Level{self.level} map file missing.")
@@ -395,7 +395,7 @@ class GameView(arcade.View):
 
         # Camera settings to adjust scrolling follow view,
         # And detect map boundaries
-        zoom_level = 2.75
+        zoom_level = 3
         self.camera = arcade.Camera2D()
         self.camera.zoom = zoom_level
 
