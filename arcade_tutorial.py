@@ -30,7 +30,34 @@ BULLET_SCALING = 1
 
 QUICKSAND_SPEED_DEBUFF = 0.3
 
-
+class GameEnd(arcade.View):
+    def __init__(self, final_score, final_time):
+        super().__init__()
+        self.final_score = final_score
+        self.final_time = f"{final_time:.2f}s"
+        
+    def on_show_view(self):
+        self.window.background_color = arcade.color.OLD_GOLD
+    
+    def on_draw(self):
+        self.clear()
+        arcade.draw_text("You beat the game! \nCongratulations, you are now more financially stable.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2,
+                         arcade.color.BLACK,
+                         font_size=40, anchor_x="center")
+        arcade.draw_text(f"You beat the game in {self.final_time}, with a score of {self.final_score}! Compare with your friends.",
+                         WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 75, arcade.color.BLACK, font_size = 25, anchor_x="center")
+        arcade.draw_text("Press ENTER to quit, or CLICK anywhere to restart.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 120,
+                         arcade.color.BLACK,
+                         font_size = 25, anchor_x="center")
+        
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        game_view = GameView()
+        game_view.setup()
+        self.window.show_view(game_view)
+        
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.ENTER:
+            arcade.exit()
 
 class MenuView(arcade.View):
     def on_show_view(self):
@@ -52,9 +79,10 @@ class InstructionView(arcade.View):
 
     def on_draw(self):
         self.clear()
-        arcade.draw_text("You are a Frog, and must collect all the coins and diamonds, securing them in your chest.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2,
+        arcade.draw_text("You are a Frog, collect as many diamonds and coins in the shortest time\n to be most succesful in the future.",
+                         WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2,
                          arcade.color.BLACK, font_size=25, anchor_x="center")
-        arcade.draw_text("A/D to move left and right, Space to jump, and double tap jump to double jump.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 75,
+        arcade.draw_text("A/D to move left and right, Space/W to jump, and double tap jump to double jump.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 75,
                          arcade.color.GRAY, font_size=20, anchor_x="center")
         arcade.draw_text("Click to advance", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 175, arcade.color.GRAY, font_size=20, anchor_x="center")
 
@@ -223,7 +251,8 @@ class GameView(arcade.View):
             },
             "Quicksand": {
                 "use_spatial_hash": True
-            }
+            },
+            
         }
 
         map_path = os.path.join(os.path.dirname(__file__), f"level3.tmx")
@@ -442,12 +471,14 @@ class GameView(arcade.View):
                 self.is_on_quicksand = True
                 self.current_movement_speed = MOVEMENT_SPEED * QUICKSAND_SPEED_DEBUFF
                 
+                
             if self.player.change_x != 0:
                 self.player.change_x = self.player.change_x  / abs(self.player.change_x) * self.current_movement_speed
         else:
             if self.is_on_quicksand:
                 self.is_on_quicksand = False
                 self.current_movement_speed = MOVEMENT_SPEED
+                
                 
                 if self.player.change_x != 0:
                     self.player.change_x = self.player.change_x / abs(self.player.change_x) * self.current_movement_speed     
@@ -495,6 +526,12 @@ class GameView(arcade.View):
             if chest_hit_list:
                 self.level += 1
                 self.setup()
+                
+        if "Final" in self.scene:
+            final_chest_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Final"])
+            if final_chest_hit_list:
+                game_end = GameEnd(self.score, self.time_taken)
+                self.window.show_view(game_end)
 
     def player_dies(self):
         self.lives -= 1
