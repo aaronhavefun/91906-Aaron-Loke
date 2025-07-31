@@ -308,7 +308,7 @@ class GameView(arcade.View):
 
         self.player = None
 
-        self.lives = 5
+        self.lives = -1
         self.font_size = 20
         self.font_color = arcade.color.WHITE
 
@@ -318,7 +318,7 @@ class GameView(arcade.View):
 
         self.view_bottom = 0
         self.view_left = 0
-        # Double jump check attribute
+        # Double jump check
         self.was_on_ground = False
         
         # Character resource path
@@ -564,8 +564,6 @@ class GameView(arcade.View):
             color=self.font_color
         )
         
-        arcade.draw_text(f"Player Pos: ({self.player.center_x:.0f}, {self.player.center_y:.0f})",
-                     10, 30, arcade.color.WHITE, 16)
 
     def center_camera_to_player(self):
         """Center the camera to player movement using
@@ -601,6 +599,10 @@ class GameView(arcade.View):
         map_height = self.tile_map.height * self.tile_map.tile_height
         self.player.top = min(self.player.top, map_height)
         self.player.bottom = max(self.player.bottom, 0)
+        
+        if self.player.bottom < 0:
+            self.player_dies
+            
         
         
         
@@ -741,6 +743,8 @@ class GameView(arcade.View):
 
         # Recall camera function to consistently follow user.
         self.center_camera_to_player()
+        
+         
 
         # Set map boundaries constantly ensuring user doesnt walk off
         map_left = 0
@@ -784,6 +788,12 @@ class GameView(arcade.View):
         spawn point, as well as directing user to GameOverView, 
         when lives run out."""
         self.lives -= 1
+        
+        if self.lives < 0:
+            self.lives = 0
+            game_over_view = GameOverView(self.score, self.time_taken)
+            self.window.show_view(game_over_view)
+        
         if self.lives > 0:
             self.player.center_x = self.spawn_x
             self.player.center_y = self.spawn_y
