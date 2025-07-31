@@ -30,6 +30,10 @@ BULLET_SCALING = 1
 
 QUICKSAND_SPEED_DEBUFF = 0.3
 
+BOUNCE_FORCE = 10
+MAX_JUMPS = 2
+
+
 
 class GameEnd(arcade.View):
     """
@@ -135,7 +139,7 @@ class InstructionView(arcade.View):
         """Renders the view, placing the text."""
         self.clear()
         arcade.draw_text("You are a Frog, collect as many diamonds"
-        "and coins in the shortest time\n to be most succesful in the future.",
+        " and coins in the shortest time\n to be most succesful in the future.",
                          WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2,
                          arcade.color.BLACK, font_size=25, anchor_x="center")
                          
@@ -177,7 +181,7 @@ class GameOverView(arcade.View):
                          WINDOW_HEIGHT / 2 + 100, arcade.color.RED, 60,
                          anchor_x="center")
         
-        arcade.draw_text(f"Final Score and Time: {self.final_score}pts"
+        arcade.draw_text(f"Final Score and Time: {self.final_score}pts "
                          f"and {self.final_time}.",
                          WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 25,
                          arcade.color.RED, 60, anchor_x="center")
@@ -217,7 +221,7 @@ class PlayerCharacter(arcade.Sprite):
         
         # Limits and measures for the double jump function.
         self.jump_count = 0
-        self.max_jumps = 2
+        self.max_jumps = MAX_JUMPS
 
     def update_animation(self, delta_time: float = 1 / 60):
         """Update the players animations and textures based on
@@ -376,7 +380,10 @@ class GameView(arcade.View):
         }
 
         map_path = os.path.join(os.path.dirname(__file__),
-                                f"level{self.level}.tmx")
+                                f"level3.tmx")
+        
+        if not os.path.exists(map_path):
+            raise FileNotFoundError(f"Level{self.level} map file missing.")
 
         self.tile_map = arcade.load_tilemap(
             map_path,
@@ -388,7 +395,7 @@ class GameView(arcade.View):
 
         # Camera settings to adjust scrolling follow view,
         # And detect map boundaries
-        zoom_level = 3
+        zoom_level = 2.75
         self.camera = arcade.Camera2D()
         self.camera.zoom = zoom_level
 
@@ -543,6 +550,9 @@ class GameView(arcade.View):
             font_size=self.font_size,
             color=self.font_color
         )
+        
+        arcade.draw_text(f"Player Pos: ({self.player.center_x:.0f}, {self.player.center_y:.0f})",
+                     10, 30, arcade.color.WHITE, 16)
 
     def center_camera_to_player(self):
         """Center the camera to player movement using
@@ -569,16 +579,22 @@ class GameView(arcade.View):
         self.gui_camera.match_window(position=True)
 
     def on_update(self, delta_time):
-        """Updates games based on time intervals, primarily handling
-        animations and game collisions."""
+        """Main game loop updates."""
         self.update_sprites(delta_time)
         self.handle_collisions(delta_time)
         self.check_game_state(delta_time)
+        
+        map_height = self.tile_map.height * self.tile_map.tile_height
+        self.player.top = min(self.player.top, map_height)
+        self.player.bottom = max(self.player.bottom, 0)
+        
+        
         
         self.physics_engine.update()
         self.scene.update(delta_time)
         
     def update_sprites(self, delta_time):
+        """Handles the updating of sprite animations and positioning"""
         # Sprite animation updates
         self.player_sprite_list.update()
         self.player.update_animation(delta_time)
@@ -592,6 +608,7 @@ class GameView(arcade.View):
 
         
     def handle_collisions(self,delta_time): 
+        """Handles all collision checks for both hazards and platforms"""
         if "Danger" in self.scene:
             danger_hit_list = (arcade.check_for_collision_with_list
                                (self.player, self.scene["Danger"]))
@@ -615,7 +632,7 @@ class GameView(arcade.View):
             bounce_hit_list = (arcade.check_for_collision_with_list
                                (self.player, self.scene["Bounce"]))
             if bounce_hit_list:
-                self.player.change_y = 10
+                self.player.change_y = min(BOUNCE_FORCE, 15)
                 self.player.jump_count = 1
         
         # Store quicksand collisions        
@@ -702,6 +719,9 @@ class GameView(arcade.View):
                 self.player.change_y = PLAYER_CLIMB_SPEED
                 
     def check_game_state(self, delta_time):
+        """Maintains other game features, updating additional features
+        such as time score, camera, map boundaries, sprite removal,
+        cannon firing cooldown, and double jump cooldown."""
         # Time Score
         self.time_taken += delta_time
 
