@@ -318,6 +318,9 @@ class GameView(arcade.View):
 
         self.view_bottom = 0
         self.view_left = 0
+        # Double jump check attribute
+        self.was_on_ground = False
+        
         # Character resource path
         character = "frog_man/frog_man"
         # Updating sprite sheet animations
@@ -348,6 +351,7 @@ class GameView(arcade.View):
         # Temp variable for modifying player speed in quicksand
         self.is_on_quicksand = False
         self.current_movement_speed =  MOVEMENT_SPEED
+        
     
 
     def setup(self):
@@ -389,7 +393,7 @@ class GameView(arcade.View):
         }
 
         map_path = os.path.join(os.path.dirname(__file__),
-                                f"level3.tmx")
+                                f"level{self.level}.tmx")
         
         if not os.path.exists(map_path):
             raise FileNotFoundError(f"Level{self.level} map file missing.")
@@ -593,6 +597,7 @@ class GameView(arcade.View):
         self.handle_collisions(delta_time)
         self.check_game_state(delta_time)
         
+        # Vertical map boundaries
         map_height = self.tile_map.height * self.tile_map.tile_height
         self.player.top = min(self.player.top, map_height)
         self.player.bottom = max(self.player.bottom, 0)
@@ -765,10 +770,13 @@ class GameView(arcade.View):
                 if self.cannon_fire_timers[cannon] <= 0:
                     self.fire_bullet_from_cannon(cannon)
                     self.cannon_fire_timers[cannon] = random.uniform(1, 10) 
-        # Double jump checker
-        if self.physics_engine.can_jump():
+        # Double jump checker            
+        is_on_ground = self.physics_engine.can_jump()
+        
+        if is_on_ground and not self.was_on_ground:
             self.player.jump_count = 0
         
+        self.was_on_ground = is_on_ground
         
 
     def player_dies(self):
@@ -810,7 +818,7 @@ class GameView(arcade.View):
                     """ Identifying player ability to double jump
                     ensuring cooldown is off."""
                     self.player.change_y = PLAYER_JUMP_SPEED
-                    self.player.jump_count = 1
+                    self.player.jump_count += 1
             # Applying additional jump
                 elif self.player.jump_count < self.player.max_jumps:
                     self.player.change_y = PLAYER_DOUBLE_JUMP_SPEED
@@ -825,8 +833,7 @@ class GameView(arcade.View):
         elif key in (arcade.key.ESCAPE, arcade.key.Q):
             arcade.close_window()
         # Upwards climb for ladder interaction
-        if key == arcade.key.W or key == arcade.key.SPACE:
-            self.jump_key_pressed = True
+        
 
     def on_key_release(self, key, modifiers):
         if key in (arcade.key.LEFT, arcade.key.RIGHT,
