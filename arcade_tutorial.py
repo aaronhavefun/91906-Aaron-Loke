@@ -213,7 +213,7 @@ class GameView(arcade.View):
             }
         }
 
-        map_path = os.path.join(os.path.dirname(__file__), f"level2.tmx")
+        map_path = os.path.join(os.path.dirname(__file__), f"level{self.level}.tmx")
 
         self.tile_map = arcade.load_tilemap(
             map_path,
