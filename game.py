@@ -314,7 +314,7 @@ class GameView(arcade.View):
         self.font_color = arcade.color.WHITE
 
         self.score = 0
-        self.level = 2
+        self.level = 1
         self.time_taken = 0
 
         self.view_bottom = 0
@@ -765,6 +765,8 @@ class GameView(arcade.View):
         for bullet in self.bullet_list:
             if bullet.should_be_removed:
                 bullet.remove_from_sprite_lists()
+            if self.level == 3:
+                bullet.remove_fromt_sprite_lists()
 
 
         # Handling cannon cooldown by identifying delay using frame

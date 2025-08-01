@@ -928,17 +928,17 @@
   </properties>
   <object id="13" gid="122" x="362.25" y="509.5" width="16" height="10">
    <properties>
-    <property name="change_x" type="int" value="1"/>
+    <property name="change_x" type="float" value="0.75"/>
    </properties>
   </object>
   <object id="15" gid="123" x="378.25" y="509.5" width="16" height="10">
    <properties>
-    <property name="change_x" type="int" value="1"/>
+    <property name="change_x" type="float" value="0.75"/>
    </properties>
   </object>
   <object id="16" gid="124" x="394.125" y="509.5" width="16" height="10">
    <properties>
-    <property name="change_x" type="int" value="1"/>
+    <property name="change_x" type="float" value="0.75"/>
    </properties>
   </object>
  </objectgroup>
