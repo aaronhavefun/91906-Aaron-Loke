@@ -78,7 +78,8 @@ class GameEnd(arcade.View):
                          arcade.color.BLACK, font_size = 25,
                          anchor_x="center")
                          
-        arcade.draw_text("Press ENTER to quit, or CLICK anywhere to restart.",
+        arcade.draw_text("Press ENTER to quit,"
+                        " or CLICK anywhere to restart.",
                          WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 120,
                          arcade.color.BLACK,
                          font_size = 25, anchor_x="center")
@@ -190,7 +191,7 @@ class GameOverView(arcade.View):
                          WINDOW_HEIGHT / 2 + 100, arcade.color.RED, 60,
                          anchor_x="center")
         
-        arcade.draw_text(f"Final Score and Time: {self.final_score}pts "
+        arcade.draw_text(f"Final Score and Time: {self.final_score}pts"
                          f"and {self.final_time}.",
                          WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 25,
                          arcade.color.RED, 60, anchor_x="center")
@@ -308,7 +309,7 @@ class GameView(arcade.View):
 
         self.player = None
 
-        self.lives = -1
+        self.lives = 5
         self.font_size = 20
         self.font_color = arcade.color.WHITE
 
@@ -722,7 +723,8 @@ class GameView(arcade.View):
             if final_chest_hit_list:
                 game_end = GameEnd(self.score, self.time_taken)
                 self.window.show_view(game_end)
-                # Identifying ladder interaction for upwards climb motion
+                # Identifying ladder interaction
+                # for upwards climb motion
                 
         is_on_ladder = arcade.check_for_collision_with_list(self.player,
                                                             self.ladder_list)
@@ -816,8 +818,9 @@ class GameView(arcade.View):
     def on_key_press(self, key, modifiers):
         """Handles player mvovement keys, applying speed to
         jumps and horizontal motion. """
-        is_on_ladder  = arcade.check_for_collision_with_list(self.player,
-                                                             self.ladder_list)
+        is_on_ladder  = (arcade.check_for_collision_with_list
+        (self.player,
+        self.ladder_list))
         
         if key in (arcade.key.W, arcade.key.SPACE):
             if is_on_ladder:
