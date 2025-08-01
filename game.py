@@ -625,7 +625,8 @@ class GameView(arcade.View):
 
         
     def handle_collisions(self,delta_time): 
-        """Handles all collision checks for both hazards and platforms"""
+        """Handles all collision checks for both hazards
+          and platforms"""
         if "Danger" in self.scene:
             danger_hit_list = (arcade.check_for_collision_with_list
                                (self.player, self.scene["Danger"]))
