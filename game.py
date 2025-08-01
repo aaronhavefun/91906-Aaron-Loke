@@ -766,7 +766,7 @@ class GameView(arcade.View):
             if bullet.should_be_removed:
                 bullet.remove_from_sprite_lists()
             if self.level == 3:
-                bullet.remove_fromt_sprite_lists()
+                bullet.remove_from_sprite_lists()
 
 
         # Handling cannon cooldown by identifying delay using frame
