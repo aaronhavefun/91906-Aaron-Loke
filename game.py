@@ -314,7 +314,7 @@ class GameView(arcade.View):
         self.font_color = arcade.color.WHITE
 
         self.score = 0
-        self.level = 1
+        self.level = 2
         self.time_taken = 0
 
         self.view_bottom = 0
@@ -436,7 +436,7 @@ class GameView(arcade.View):
         )
         # Spawn settings and priorities, dictating player spawn
         # Location and preferences.
-        self.player.center_x = 50
+        self.player.center_x = 60
         self.player.center_y = 160
         self.spawn_x = self.player.center_x
         self.spawn_y = self.player.center_y
